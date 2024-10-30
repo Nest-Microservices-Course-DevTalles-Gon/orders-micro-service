@@ -1,7 +1,7 @@
 import { Controller, NotImplementedException, ParseUUIDPipe } from '@nestjs/common';
 import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import { OrdersService } from './orders.service';
-import { ChangeOrdersStatusDto, CreateOrderDto, UpdateOrderDto } from './dto';
+import { ChangeOrdersStatusDto, CreateOrderDto, PaidOrderDto, UpdateOrderDto } from './dto';
 import { OrdersPaginationDto } from './dto';
 
 @Controller()
@@ -56,9 +56,9 @@ export class OrdersController {
   }
 
   @EventPattern('payment.succeeded')
-  paymentSucceeded(@Payload() paidOrderDto: any) {
-    console.log({ paidOrderDto });
-    return;
+  paymentSucceeded(@Payload() paidOrderDto: PaidOrderDto) {
+
+    return this.ordersService.paidOrder(paidOrderDto);
 
   }
 }
