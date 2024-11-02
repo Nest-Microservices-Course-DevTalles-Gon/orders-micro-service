@@ -1,0 +1,57 @@
+
+## Dependencies
+
+FROM node:21-alpine3.19 AS deps
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+
+RUN npm install
+
+
+## Builder - Construye la aplicación
+FROM node:21-alpine3.19 AS build
+
+ARG ORDERS_DATABASE_URL
+ENV DATABASE_URL=$ORDERS_DATABASE_URL
+
+WORKDIR /usr/src/app
+
+# Copiar de deps los modulos node_modules
+COPY --from=deps /usr/src/app/node_modules ./node_modules
+
+# Copiar el código fuente de la aplicación
+COPY . .
+
+# Genera primsa
+RUN npx prisma migrate deploy
+RUN npx prisma generate
+
+# Run npm run test
+RUN npm run build
+
+# Limpieza de modules de node que no necesito
+RUN npm ci -f --only=production && npm cache clean --force
+
+
+## Crear la imagen final
+FROM node:21-alpine3.19 AS production
+
+WORKDIR /usr/src/app
+
+COPY --from=build /usr/src/app/node_modules ./node_modules
+COPY --from=build /usr/src/app/prisma ./prisma
+
+# Copiar la carpeta dist
+
+COPY --from=build /usr/src/app/dist ./dist
+
+ENV NODE_ENV=production
+
+# Cambiar al usuario node
+USER node
+
+EXPOSE 3000
+
+CMD [ "node", "dist/main.js" ]
