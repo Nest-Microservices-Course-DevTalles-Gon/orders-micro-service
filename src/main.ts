@@ -25,7 +25,7 @@ async function bootstrap() {
 
   await app.listen();
 
-  logger.log(`Orders-Microservice is Listening`);
+  logger.log(`Order-MS is Listening`);
 
 }
 bootstrap();
